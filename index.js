@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 const path = require('path');
 const express = require('express');
+const https = require('https');
 
 // Create express application
 const app = express();
@@ -10,6 +11,23 @@ const hostname = '0.0.0.0';
 const port = process.env.PORT || 1234; // Use Render's PORT or fallback to 1234
 const enableCORS = true;
 const enableWasmMultithreading = true;
+
+// Proxy endpoint for ip-api
+app.get('/api/ip/:ip', (req, res) => {
+    const ip = req.params.ip;
+    https.get(`https://ip-api.com/json/${ip}`, (apiRes) => {
+        let data = '';
+        apiRes.on('data', (chunk) => {
+            data += chunk;
+        });
+        apiRes.on('end', () => {
+            res.json(JSON.parse(data));
+        });
+    }).on('error', (err) => {
+        console.error('Error fetching IP data:', err);
+        res.status(500).json({ error: 'Failed to fetch IP data' });
+    });
+});
 
 // Serve static files with correct MIME types
 app.use(express.static(path.join(__dirname, 'public'), {
