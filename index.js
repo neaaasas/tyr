@@ -15,12 +15,16 @@ const enableWasmMultithreading = true;
 // Proxy endpoint for ip-api
 app.get('/api/ip/:ip', (req, res) => {
     const ip = req.params.ip;
+    console.log('Proxy endpoint called for IP:', ip);
+    
     https.get(`https://ip-api.com/json/${ip}`, (apiRes) => {
+        console.log('IP-API request made, status:', apiRes.statusCode);
         let data = '';
         apiRes.on('data', (chunk) => {
             data += chunk;
         });
         apiRes.on('end', () => {
+            console.log('IP-API response received:', data);
             res.json(JSON.parse(data));
         });
     }).on('error', (err) => {
