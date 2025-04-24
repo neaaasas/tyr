@@ -1,0 +1,15 @@
+[Unit]
+Description=Node server
+
+[Service]
+ExecStart=~/astra-servers/astra/index.js
+Restart=always
+User=nogroup
+# Note Debian/Ubuntu uses 'nogroup', RHEL/Fedora uses 'nobody'
+Group=nogroup
+Environment=PATH=/usr/bin:/usr/local/bin
+Environment=NODE_ENV=production
+WorkingDirectory=/var/www/myapp
+
+[Install]
+WantedBy=multi-user.target
