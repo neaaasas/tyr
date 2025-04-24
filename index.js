@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 const path = require('path');
 const express = require('express');
-const fs = require('fs');
 
 // Create express application
 const app = express();
 
 // Settings
 const hostname = '0.0.0.0';
-const port = 1234;
+const port = process.env.PORT || 1234; // Use Render's PORT or fallback to 1234
 const enableCORS = true;
 const enableWasmMultithreading = true;
 
@@ -26,6 +25,11 @@ app.use(express.static(path.join(__dirname, 'public'), {
         } else if (path.endsWith('.data') || path.endsWith('.unityweb')) {
             res.setHeader('Content-Type', 'application/octet-stream');
         }
+
+        // Set cache control for static assets
+        if (path.endsWith('.wasm') || path.endsWith('.data') || path.endsWith('.unityweb')) {
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        }
     }
 }));
 
@@ -34,6 +38,8 @@ app.use((req, res, next) => {
     // Set CORS headers
     if (enableCORS) {
         res.set('Access-Control-Allow-Origin', '*');
+        res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        res.set('Access-Control-Allow-Headers', 'Content-Type');
     }
 
     // Set COOP, COEP, and CORP headers for SharedArrayBuffer
@@ -46,17 +52,23 @@ app.use((req, res, next) => {
     next();
 });
 
+// Health check endpoint for Render
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
+
 // Handle 404 errors
 app.use((req, res, next) => {
     res.status(404).send('File not found');
 });
 
 const server = app.listen(port, hostname, () => {
-    console.log(`Web server serving directory ${path.join(__dirname, 'public')} at http://${hostname}:${port}`);
+    console.log(`Web server running at http://${hostname}:${port}`);
+    console.log(`Serving files from: ${path.join(__dirname, 'public')}`);
 });
 
 server.addListener('error', (error) => {
-    console.error(error);
+    console.error('Server error:', error);
 });
 
 server.addListener('close', () => {
